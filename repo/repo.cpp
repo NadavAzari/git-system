@@ -1,0 +1,47 @@
+#include "repo.h"
+#include <filesystem>
+#include <fstream>
+
+repo* repo::create_repo(std::string path) {
+    return new repo(path, false);
+}
+
+repo::repo(std::string path, bool already_created) {
+    git_dir = std::filesystem::path(path) / std::filesystem::path(GIT_EXTENSION);
+    worktree_dir = path;
+
+    if(!(already_created || std::filesystem::is_directory(git_dir))) {
+        //TODO: error
+    }
+
+    create_repo_dirs("branches");
+    create_repo_dirs("objects");
+    create_repo_dirs("refs/tags");
+    create_repo_dirs("refs/heads");
+}
+
+std::string repo::get_path(std::string path) {
+    return std::filesystem::path(git_dir) / std::filesystem::path(path);
+}
+
+std::string repo::create_repo_file(std::string path) {
+    std::string p = get_path(path);
+    std::filesystem::path parent = std::filesystem::path(p).parent_path();
+    create_repo_dirs(parent.string());
+    std::ofstream file(p);
+    if(file.is_open()){
+        file.close();
+        return p;
+    }
+    return "";
+}
+
+std::string repo::create_repo_dirs(std::string path) {
+    std::filesystem::path p = get_path(path);
+    if(std::filesystem::exists(p) && std::filesystem::is_directory(p)) {
+        return p.string();
+    }
+
+    std::filesystem::create_directories(p);
+    return p.string();
+}
