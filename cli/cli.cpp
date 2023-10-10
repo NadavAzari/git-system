@@ -1,7 +1,3 @@
-//
-// Created by nadavazari on 10/9/23.
-//
-
 #include "cli.h"
 
 void cli::add_arg(std::string arg, callback_func callback) {

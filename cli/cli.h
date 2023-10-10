@@ -4,13 +4,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
-
-struct cli_execution_result {
-    bool succeed;
-    std::string message;
-};
-
-typedef cli_execution_result(*callback_func)(std::vector<std::string>);
+#include "cli_command.h"
 
 class cli {
 private:
