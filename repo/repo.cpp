@@ -13,6 +13,17 @@ repo::repo(std::string path, bool already_created) {
     if(!(already_created || std::filesystem::is_directory(git_dir))) {
         //TODO: error
     }
+    ini_conf = new conf;
+    std::string config_path = get_path("config");
+
+    if(std::filesystem::exists(config_path)) {
+        ini_conf->from_file(config_path);
+    } else if(already_created) {
+        //Todo: error
+    } else {
+        ini_conf->default_conf();
+        ini_conf->write(config_path);
+    }
 
     create_repo_dirs("branches");
     create_repo_dirs("objects");

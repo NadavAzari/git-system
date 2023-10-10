@@ -2,6 +2,7 @@
 #define MY_GIT_REPO_H
 
 #include <iostream>
+#include "../conf/conf.h"
 
 #define GIT_NAME "git"
 #define GIT_EXTENSION ".snit"
@@ -12,6 +13,7 @@ public:
 private:
     std::string worktree_dir;
     std::string git_dir;
+    conf* ini_conf;
 
     repo(std::string, bool already_created);
 
