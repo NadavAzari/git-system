@@ -2,6 +2,12 @@
 #include <filesystem>
 #include <fstream>
 
+void write_to_file(std::string path, std::string content) {
+    std::ofstream file(path);
+    file << content;
+    file.close();
+}
+
 repo* repo::create_repo(std::string path) {
     return new repo(path, false);
 }
@@ -21,14 +27,15 @@ repo::repo(std::string path, bool already_created) {
     } else if(already_created) {
         //Todo: error
     } else {
+        create_repo_dirs("branches");
+        create_repo_dirs("objects");
+        create_repo_dirs("refs/tags");
+        create_repo_dirs("refs/heads");
         ini_conf->default_conf();
         ini_conf->write(config_path);
-    }
 
-    create_repo_dirs("branches");
-    create_repo_dirs("objects");
-    create_repo_dirs("refs/tags");
-    create_repo_dirs("refs/heads");
+        write_to_file(create_repo_file("HEAD"), "ref: refs/heads/master\n");
+    }
 }
 
 std::string repo::get_path(std::string path) {
