@@ -12,8 +12,10 @@ cli_execution_result init_func(std::vector<std::string> args) {
         return res;
     }
     repo* r =  repo::create_repo(path);
+    delete r;
     res.message = "Repo created!";
     res.succeed = true;
+
     return res;
 }
 
