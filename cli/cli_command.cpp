@@ -15,7 +15,6 @@ cli_execution_result init_func(std::vector<std::string> args) {
     delete r;
     res.message = "Initialized empty repository";
     res.succeed = true;
-
     return res;
 }
 
