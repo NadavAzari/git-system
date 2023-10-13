@@ -2,8 +2,6 @@
 #include "cli/cli.h"
 #include "cli/cli_command.h"
 
-
-
 std::vector<std::string> convert(int argc, char* argv[]) {
     std::vector<std::string> args;
     for (int i = 1; i < argc; ++i) {

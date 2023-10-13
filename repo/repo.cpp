@@ -12,6 +12,15 @@ repo* repo::create_repo(std::string path) {
     return new repo(path, false);
 }
 
+repo *repo::find_repo() {
+    std::filesystem::path path = std::filesystem::current_path();
+    std::string repo_p = path / GIT_EXTENSION;
+    if(std::filesystem::exists(repo_p) && std::filesystem::is_directory(repo_p)) {
+        return new repo(path, true);
+    }
+    return nullptr;
+}
+
 repo::repo(std::string path, bool already_created) {
     git_dir = std::filesystem::path(path) / std::filesystem::path(GIT_EXTENSION);
     worktree_dir = path;
