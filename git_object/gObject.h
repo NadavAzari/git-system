@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -21,28 +22,48 @@ typedef unsigned char byte;
 class gObject {
 protected:
     std::string type;
-    long dLen = 0;
-    byte* data = nullptr;
 
     static std::string get_path_by_hash(std::string hash);
 public:
-    gObject(byte data[], long size);
-    gObject(){};
     virtual std::vector<byte> serialize() = 0;
-    void to_file(repo* r);
+    void to_file();
     virtual void deserialize(byte data[], int len) = 0;
-    static gObject* from_file(repo* r, std::string hash);
-
-    byte* get_data() {return data;};
-    ~gObject(){delete[] data;}
+    static gObject* from_file(std::string hash);
 };
 
 class gBlob : public gObject {
+private:
+    long dLen;
+    byte* data;
 public:
     gBlob(byte data[], long size);
-    gBlob();
-    void deserialize(byte sData[], int len);
-    std::vector<byte> serialize();
+    void deserialize(byte sData[], int len) override;
+    std::vector<byte> serialize() override;
+};
+
+class gCommit : public gObject {
+private:
+    std::unordered_map<std::string, std::string> commit_data;
+public:
+    gCommit(std::unordered_map<std::string, std::string> kv);
+    void deserialize(byte sData[], int len) override;
+    std::vector<byte> serialize() override;
+};
+
+
+struct gTreeLeaf {
+    std::string mode;
+    std::string path;
+    std::string hash;
+};
+
+class gTree : public gObject {
+private:
+    std::vector<gTreeLeaf> leafs;
+public:
+    gTree(std::vector<gTreeLeaf> leafs);
+    void deserialize(byte sData[], int len) override;
+    std::vector<byte> serialize() override;
 };
 
 #endif

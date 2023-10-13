@@ -13,7 +13,7 @@ cli_execution_result init_func(std::vector<std::string> args) {
     }
     repo* r =  repo::create_repo(path);
     delete r;
-    res.message = "Repo created!";
+    res.message = "Initialized empty repository";
     res.succeed = true;
 
     return res;

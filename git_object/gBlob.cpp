@@ -1,10 +1,6 @@
 #include "gObject.h"
 
-gBlob::gBlob(byte *data, long size) : gObject(data, size){
-    type = BLOB_TYPE;
-}
-
-gBlob::gBlob() : gObject() {
+gBlob::gBlob(byte *data, long size) : gObject(){
     type = BLOB_TYPE;
 }
 

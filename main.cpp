@@ -1,7 +1,6 @@
 #include <iostream>
 #include "cli/cli.h"
 #include "cli/cli_command.h"
-#include "git_object/gObject.h"
 
 std::vector<std::string> convert(int argc, char* argv[]) {
     std::vector<std::string> args;

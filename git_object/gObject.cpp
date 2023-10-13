@@ -31,7 +31,11 @@ gObject* handle_obj(std::string type, byte* data, long len) {
     return new gBlob();
 }
 
-gObject* gObject::from_file(repo* r, std::string hash) {
+gObject* gObject::from_file(std::string hash) {
+    repo* r = repo::find_repo();
+    if(r == nullptr) {
+        //TODO: ERROR
+    }
     std::string path = r->get_path(get_path_by_hash(hash));
     std::vector<byte> data = crypto::decompressData(readFileToVector(path));
     auto it = std::find(data.begin(), data.end(),0x20);
@@ -47,10 +51,15 @@ gObject* gObject::from_file(repo* r, std::string hash) {
     long block_size = std::stol(size);
     byte dataRes[block_size];
     std::copy(data.begin() + nIdx + 1, data.end(), dataRes);
+    delete r;
     return handle_obj(type, dataRes, block_size);
  }
 
-void gObject::to_file(repo* r) {
+void gObject::to_file() {
+    repo* r = repo::find_repo();
+    if(r == nullptr) {
+        //TODO: ERROR
+    }
     std::vector<byte> data = serialize();
     std::string sha1 = crypto::sha1OnVector(data);
     std::string path = get_path_by_hash(sha1);
@@ -68,12 +77,14 @@ void gObject::to_file(repo* r) {
     for(const byte b : data) {
         res.push_back(b);
     }
+
     std::vector<byte> compressedRes = crypto::compressData(res);
     std::ofstream output(r->get_path(path), std::ios::binary);
     for(byte b: compressedRes) {
         output.write(reinterpret_cast<char*>(&b), sizeof(b));
     }
     output.close();
+    delete r;
 }
 
 gObject::gObject(byte* d, long size) {
