@@ -1,4 +1,5 @@
 #include "gObject.h"
+#include "../refs/ref.h"
 
 gCommit::gCommit(std::unordered_map<std::string, std::string> kv) : gObject(){
     type = COMMIT_TYPE;
@@ -10,7 +11,7 @@ gCommit::gCommit(std::unordered_map<std::string, std::string> kv) : gObject(){
 std::vector<byte> gCommit::serialize() {
     std::string result = "";
     for(const auto& pair : commit_data) {
-        if(pair.first == "") continue;
+        if(pair.first == "") {continue;}
         result += pair.first + " ";
 
         size_t found = pair.second.find("\n");
@@ -49,6 +50,62 @@ void gCommit::deserialize(byte *sData, int len) {
         }
         std::string value = data.substr(space + 1,  newLine - space - 1);
         commit_data[key] = value;
+        start = space + 1 + newLine - space;
     }
     commit_data[""] = data.substr(end, data.length() - end);
+}
+
+void gCommit::set(std::string key, std::string value) {
+    commit_data[key] = value;
+}
+
+std::string gCommit::get(std::string key) {
+    if(commit_data.find(key) == commit_data.end()) {
+        return "";
+    }
+
+    return commit_data[key];
+}
+
+bool gCommit::commit(std::string message) {
+    repo* rep = repo::find_repo();
+    gCommit* commit = new gCommit;
+    gTree* tree = gTree::create_worktree();
+    std::string branch = rep->get_current_branch();
+    ref* r = ref::fetch_reference("HEAD");
+    if(r->get_reference() != "") {
+        commit->set("parent", r->get_reference());
+        gCommit* parent = dynamic_cast<gCommit*>(gObject::from_file(r->get_reference()));
+        std::string last_tree_hash = parent->get("tree");
+
+        if(tree->get_hash() == last_tree_hash) {
+            delete rep;
+            delete commit;
+            delete r;
+            delete tree;
+            delete parent;
+
+            return false;
+        }
+
+
+
+        delete parent;
+    }
+    tree->to_file();
+    commit->set("tree", tree->get_hash());
+    commit->set("branch", branch);
+    commit->set("", message);
+
+
+    commit->to_file();
+    r->ref_path = std::filesystem::path(rep->get_path("refs")) / "heads" / rep->get_current_branch();
+    r->ref_to = commit->get_hash();
+    r->create_ref();
+
+    delete tree;
+    delete commit;
+    delete rep;
+    delete r;
+    return true;
 }

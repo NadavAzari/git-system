@@ -1,7 +1,10 @@
 #include "gObject.h"
 
-gBlob::gBlob(byte *data, long size) : gObject(){
+gBlob::gBlob(byte *d, long size) : gObject(){
     type = BLOB_TYPE;
+    dLen = size;
+    data = new byte[size];
+    memcpy(data,d, size);
 }
 
 std::vector<byte> gBlob::serialize() {
@@ -9,7 +12,7 @@ std::vector<byte> gBlob::serialize() {
 }
 
 void gBlob::deserialize(byte *sData, int len) {
-    if(data == nullptr) {
+    if(data != nullptr) {
         delete[] data;
     }
     data = new byte[len];

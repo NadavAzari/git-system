@@ -40,10 +40,11 @@ repo::repo(std::string path, bool already_created) {
         create_repo_dirs("objects");
         create_repo_dirs("refs/tags");
         create_repo_dirs("refs/heads");
+        create_repo_file("index");
+        write_to_file(create_repo_file("HEAD"), "ref: refs/heads/main\n");
+        create_repo_file("refs/heads/main");
         ini_conf->default_conf();
         ini_conf->write(config_path);
-
-        write_to_file(create_repo_file("HEAD"), "ref: refs/heads/master\n");
     }
 }
 
@@ -71,4 +72,14 @@ std::string repo::create_repo_dirs(std::string path) {
 
     std::filesystem::create_directories(p);
     return p.string();
+}
+
+std::string repo::get_current_branch() {
+    std::string path = get_path("HEAD");
+    std::ifstream file(path);
+    std::string content;
+    content.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    file.close();
+    std::string branch_path =  content.substr(5, content.length() - 6);
+    return std::filesystem::path(branch_path).filename();
 }

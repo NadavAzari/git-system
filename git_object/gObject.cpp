@@ -1,4 +1,5 @@
 #include "gObject.h"
+#include "../files.h"
 
 std::string gObject::get_path_by_hash(std::string hash) {
     std::string dir = hash.substr(0,2);
@@ -7,28 +8,21 @@ std::string gObject::get_path_by_hash(std::string hash) {
     return obj_path;
 }
 
-std::vector<byte> readFileToVector(const std::string& filename) {
-    std::ifstream inputFile(filename, std::ios::binary);
-
-    if (!inputFile.is_open()) {
-        //TODO: Error
-    }
-
-    inputFile.seekg(0, std::ios::end);
-    std::streampos fileSize = inputFile.tellg();
-    inputFile.seekg(0, std::ios::beg);
-
-    std::vector<byte> fileData(fileSize);
-
-    inputFile.read(reinterpret_cast<char*>(fileData.data()), fileSize);
-
-    inputFile.close();
-
-    return fileData;
-}
-
 gObject* handle_obj(std::string type, byte* data, long len) {
-    return new gBlob();
+    if(type == BLOB_TYPE) {
+        return new gBlob(data, len);
+    }
+    else if(type == COMMIT_TYPE) {
+        gCommit* commit = new gCommit();
+        commit->deserialize(data, len);
+        return commit;
+    }
+    else if(type == TREE_TYPE) {
+        gTree* tree = new gTree();
+        tree->deserialize(data, len);
+        return tree;
+    }
+    return nullptr;
 }
 
 gObject* gObject::from_file(std::string hash) {
@@ -87,8 +81,22 @@ void gObject::to_file() {
     delete r;
 }
 
-gObject::gObject(byte* d, long size) {
-    data = new byte[size];
-    std::memcpy(data, d , size);
-    dLen = size;
+std::string gObject::get_hash() {
+    std::vector<byte> data = serialize();
+    std::string sha1 = crypto::sha1OnVector(data);
+    return sha1;
+}
+
+void gObject::create_objs_from_path(std::string path, std::vector<gObject*>& vec) {
+    if(std::filesystem::is_directory(path)) {
+        std::vector<std::string> files;
+        walk(files, path);
+        for(const std::string file : files) {
+            create_objs_from_path(file, vec);
+        }
+    } else {
+        std::vector<byte> bytes = readFileToVector(path);
+        gBlob* blob = new gBlob(bytes.data(), bytes.size());
+        vec.push_back(blob);
+    }
 }
