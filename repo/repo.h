@@ -12,6 +12,7 @@ public:
     static repo* find_repo();
     static repo* create_repo(std::string path);
     std::string get_path(std::string path);
+    std::string get_current_branch();
 private:
     std::string worktree_dir;
     std::string git_dir;

@@ -13,7 +13,11 @@ std::vector<std::string> convert(int argc, char* argv[]) {
 int main(int argc, char* argv[]) {
     cli c;
     c.add_arg("init", commands::init);
+    c.add_arg("status", commands::status);
+    c.add_arg("add", commands::add);
+    c.add_arg("commit", commands::commit);
+    c.add_arg("log", commands::log);
 
     std::vector<std::string> args = convert(argc,argv);
-    std::cout << c.execute(args).message << "\n";
+    std::cout << c.execute(args).message;
 }

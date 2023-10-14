@@ -3,17 +3,18 @@
 
 #include <iostream>
 #include <fstream>
-#include <filesystem>]
+#include <filesystem>
 #include "../repo/repo.h"
 
 class ref {
 private:
-    std::string ref_path;
-    std::string ref_to;
     ref(std::string ref_name);
 public:
+    std::string ref_path;
+    std::string ref_to;
     std::string get_reference();
-public ref* fetch_reference(std::string ref_name);
+    static ref* fetch_reference(std::string ref_name);
+    void create_ref();
 };
 
 
