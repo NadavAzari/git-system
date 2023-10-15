@@ -1,7 +1,7 @@
 # My own git system
 
 ## Important to know
-
+(I DIDNT FINISH CODING, THE PROJECT STILL GOT BUGS BUT ITS ALMOST FINISHED)
 Before trying and using my own basic implementation version of git,
 Its good to know, If your project is big, more than one participant, uses remote git server, merging between branches?
 then **dont use snit**.
