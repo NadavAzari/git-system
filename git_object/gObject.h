@@ -22,9 +22,8 @@ typedef unsigned char byte;
 class gObject {
 protected:
     std::string type;
-
-    static std::string get_path_by_hash(std::string hash);
 public:
+    static std::string get_path_by_hash(std::string hash);
     virtual std::vector<byte> serialize() = 0;
     void to_file();
     virtual void deserialize(byte data[], int len) = 0;

@@ -322,7 +322,6 @@ cli_execution_result checkout_func(std::vector<std::string> args) {
                 return res;
             }
             r->create_repo_file(path);
-            delete r;
             res.message = "Branch '" + branch_name + "' created\n";
             res.succeed = true;
 
@@ -331,12 +330,14 @@ cli_execution_result checkout_func(std::vector<std::string> args) {
             delete tmp_ref;
 
             std::ofstream head_file(r->get_path("HEAD"));
-            head_file << "ref: " << path << "\n";
+            std::string path_of_ref = std::filesystem::relative(path, std::filesystem::current_path() / GIT_EXTENSION);
+            head_file << "ref: " <<path_of_ref << "\n";
             head_file.close();
 
             std::ofstream branch_file(path);
             branch_file << hash << "\n";
             branch_file.close();
+            delete r;
             return res;
 
         } else {
@@ -366,6 +367,7 @@ cli_execution_result checkout_func(std::vector<std::string> args) {
         head_file << "ref: " << path << "\n";
         head_file.close();
 
+        index_file* idx = new index_file;
         ref* re = ref::fetch_reference("HEAD");
         gTree* tree = dynamic_cast<gTree*>(gObject::from_file(re->ref_to));
         delete re;
@@ -373,11 +375,18 @@ cli_execution_result checkout_func(std::vector<std::string> args) {
         for(const auto& leaf : leafs) {
             std::ofstream file(leaf.path);
             gBlob* blob = dynamic_cast<gBlob*>(gObject::from_file(leaf.hash));
+            index_file_entry entry;
+            entry.file_path = std::filesystem::relative(leaf.path, std::filesystem::current_path());
+            entry.obj_hash = blob->get_hash();
+            entry.obj_path = gObject::get_path_by_hash(entry.obj_hash);
+            idx->add_entry(entry);
             auto dataVec = blob->serialize();
             file << std::string(dataVec.begin(), dataVec.end());
             file.close();
             delete blob;
         }
+        idx->save();
+        delete idx;
         delete tree;
 
         res.message = "Switched to branch '" + branch_name + "'\n";
