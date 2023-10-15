@@ -25,7 +25,7 @@ std::pair<std::vector<byte>::iterator, gTreeLeaf> parseLeaf(std::vector<byte>& d
     std::vector<byte> hash(pit + 1, pit + 21);
     std::string hashStr = crypto::hashBytesToString(hash.data());
 
-    auto pos = pit + 22;
+    auto pos = pit + 21;
     gTreeLeaf leaf;
 
     leaf.path = path;

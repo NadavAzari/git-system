@@ -4,6 +4,50 @@
 #include "../refs/ref.h"
 #include "../colors/colors.h"
 
+void deleteFilesAndDirs(const std::filesystem::path& baseDir) {
+    for (const auto& entry : std::filesystem::directory_iterator(baseDir)) {
+        try {
+            if (std::filesystem::is_directory(entry)) {
+                if (entry.path().filename() != ".snit") {
+                    deleteFilesAndDirs(entry.path());
+                    std::filesystem::remove(entry);
+                }
+            } else {
+                std::filesystem::remove(entry);
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "Error deleting " << entry.path() << ": " << e.what() << std::endl;
+        }
+    }
+}
+
+void createDirectoryStructure(const std::filesystem::path& filePath, const std::string& fileContent) {
+    std::filesystem::path currentDir;
+
+    for (const auto& part : filePath) {
+        if(part == filePath.filename()) {
+            break;
+        }
+        currentDir /= part;
+        if (!std::filesystem::exists(currentDir)) {
+            try {
+                std::filesystem::create_directory(currentDir);
+            } catch (const std::exception& e) {
+                //TODO: Error
+                return;
+            }
+        }
+    }
+
+    std::filesystem::path finalPath = currentDir / filePath.filename();
+    try {
+        std::ofstream outputFile(finalPath);
+        outputFile << fileContent;
+    } catch (const std::exception& e) {
+        //TODO: Error
+    }
+}
+
 void print_commit_history(gCommit* commit, std::string branch = "") {
     YELLOW();
     std::cout << "Commit ";
@@ -322,7 +366,6 @@ cli_execution_result checkout_func(std::vector<std::string> args) {
                 return res;
             }
             r->create_repo_file(path);
-            delete r;
             res.message = "Branch '" + branch_name + "' created\n";
             res.succeed = true;
 
@@ -331,12 +374,14 @@ cli_execution_result checkout_func(std::vector<std::string> args) {
             delete tmp_ref;
 
             std::ofstream head_file(r->get_path("HEAD"));
-            head_file << "ref: " << path << "\n";
+            std::string path_of_ref = std::filesystem::relative(path, std::filesystem::current_path() / GIT_EXTENSION);
+            head_file << "ref: " <<path_of_ref << "\n";
             head_file.close();
 
             std::ofstream branch_file(path);
             branch_file << hash << "\n";
             branch_file.close();
+            delete r;
             return res;
 
         } else {
@@ -355,29 +400,32 @@ cli_execution_result checkout_func(std::vector<std::string> args) {
             return res;
         }
 
-        std::vector<std::string> files;
-        walk(files);
-
-        for(std::string& file : files){
-            std::filesystem::remove(file);
-        }
+        deleteFilesAndDirs(std::filesystem::current_path());
 
         std::ofstream head_file(r->get_path("HEAD"));
         head_file << "ref: " << path << "\n";
         head_file.close();
 
+        index_file* idx = new index_file;
         ref* re = ref::fetch_reference("HEAD");
-        gTree* tree = dynamic_cast<gTree*>(gObject::from_file(re->ref_to));
+        gCommit* commit = dynamic_cast<gCommit*>(gObject::from_file(re->ref_to));
+        gTree* tree = dynamic_cast<gTree*>(gObject::from_file(commit->get("tree")));
+        delete commit;
         delete re;
         auto leafs = tree->get_leafs();
         for(const auto& leaf : leafs) {
-            std::ofstream file(leaf.path);
             gBlob* blob = dynamic_cast<gBlob*>(gObject::from_file(leaf.hash));
+            index_file_entry entry;
+            entry.file_path = std::filesystem::relative(leaf.path, std::filesystem::current_path());
+            entry.obj_hash = blob->get_hash();
+            entry.obj_path = gObject::get_path_by_hash(entry.obj_hash);
+            idx->add_entry(entry);
             auto dataVec = blob->serialize();
-            file << std::string(dataVec.begin(), dataVec.end());
-            file.close();
-            delete blob;
+            std::string data(dataVec.begin(), dataVec.end());
+            createDirectoryStructure(leaf.path, data);
         }
+        idx->save();
+        delete idx;
         delete tree;
 
         res.message = "Switched to branch '" + branch_name + "'\n";
