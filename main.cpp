@@ -17,6 +17,8 @@ int main(int argc, char* argv[]) {
     c.add_arg("add", commands::add);
     c.add_arg("commit", commands::commit);
     c.add_arg("log", commands::log);
+    c.add_arg("branch", commands::branch);
+    c.add_arg("checkout", commands::checkout);
 
     std::vector<std::string> args = convert(argc,argv);
     std::cout << c.execute(args).message;

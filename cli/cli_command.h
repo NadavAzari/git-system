@@ -21,6 +21,8 @@ namespace commands {
     extern callback_func add;
     extern callback_func commit;
     extern callback_func log;
+    extern callback_func branch;
+    extern callback_func checkout;
 }
 
 #endif

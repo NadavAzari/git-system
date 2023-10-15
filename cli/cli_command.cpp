@@ -280,10 +280,119 @@ cli_execution_result log_func(std::vector<std::string> args) {
     return res;
 }
 
+cli_execution_result branch_func(std::vector<std::string>args) {
+    std::vector<std::string> files;
+    walk(files, std::filesystem::current_path() / GIT_EXTENSION / "refs" / "heads");
+    repo* r = repo::find_repo();
+    std::string active_branch = r->get_current_branch();
+    delete r;
+    for(int i = 0; i < files.size(); i ++) {
+        std::string branch = std::filesystem::path(files[i]).filename().string();
+        if(branch == active_branch) {
+            std:: cout << "* ";
+            GREEN();
+        }
+        std::cout << branch << "\n";
+        WHITE();
+    }
+
+    cli_execution_result res;
+    res.message = "";
+    res.succeed = true;
+    return res;
+}
+
+cli_execution_result checkout_func(std::vector<std::string> args) {
+    cli_execution_result res;
+    repo* r = repo::find_repo();
+    if(args.size() == 2) {
+        if(args[0] == "-b" || args[1] == "-b") {
+            std::string branch_name;
+            if(args[0] == "-b") {
+                branch_name = args[1];
+            } else {
+                branch_name = args[0];
+            }
+
+            std::string path = std::filesystem::path(r->get_path("refs")) / "heads" / branch_name;
+            if(std::filesystem::exists(path)) {
+                res.message = "Branch '" + branch_name + "' already exists\n";
+                res.succeed = false;
+                delete r;
+                return res;
+            }
+            r->create_repo_file(path);
+            delete r;
+            res.message = "Branch '" + branch_name + "' created\n";
+            res.succeed = true;
+
+            ref* tmp_ref = ref::fetch_reference("HEAD");
+            std::string hash = tmp_ref->ref_to;
+            delete tmp_ref;
+
+            std::ofstream head_file(r->get_path("HEAD"));
+            head_file << "ref: " << path << "\n";
+            head_file.close();
+
+            std::ofstream branch_file(path);
+            branch_file << hash << "\n";
+            branch_file.close();
+            return res;
+
+        } else {
+            res.message = "Use checkout like this: checkout <branch> OR checkout -b <branch>\n";
+            res.succeed = false;
+            delete r;
+            return res;
+        }
+    } else {
+        std::string branch_name = args[0];
+        std::string path = std::filesystem::path(r->get_path("refs")) / "heads" / branch_name;
+        if(!std::filesystem::exists(path)) {
+            res.message = "Branch '" + branch_name + "' does not exists\n";
+            res.succeed = false;
+            delete r;
+            return res;
+        }
+
+        std::vector<std::string> files;
+        walk(files);
+
+        for(std::string& file : files){
+            std::filesystem::remove(file);
+        }
+
+        std::ofstream head_file(r->get_path("HEAD"));
+        head_file << "ref: " << path << "\n";
+        head_file.close();
+
+        ref* re = ref::fetch_reference("HEAD");
+        gTree* tree = dynamic_cast<gTree*>(gObject::from_file(re->ref_to));
+        delete re;
+        auto leafs = tree->get_leafs();
+        for(const auto& leaf : leafs) {
+            std::ofstream file(leaf.path);
+            gBlob* blob = dynamic_cast<gBlob*>(gObject::from_file(leaf.hash));
+            auto dataVec = blob->serialize();
+            file << std::string(dataVec.begin(), dataVec.end());
+            file.close();
+            delete blob;
+        }
+        delete tree;
+
+        res.message = "Switched to branch '" + branch_name + "'\n";
+        res.succeed = true;
+    }
+    delete r;
+    return res;
+}
+
 namespace commands {
     callback_func init = init_func;
     callback_func status = status_func;
     callback_func add = add_func;
     callback_func commit = commit_func;
     callback_func log = log_func;
+    callback_func branch = branch_func;
+    callback_func checkout = checkout_func;
 }
