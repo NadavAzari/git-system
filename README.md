@@ -2,7 +2,7 @@
 
 ## Important to know
 Before trying and using my own basic implementation version of git,
-Its good to know, If your project is big, more than one participant, uses remote git server, merging between branches?
+Its good to know that if your project is big, more than one participant, uses remote git server or need branches to be merged,
 then **dont use snit**.
 Also, snit cannot take control over all the edge cases, snit implementation does not contains optimizations like git.
 So when can you try snit?
