@@ -1,4 +1,4 @@
-# My own git system
+# My own git system (snit)
 
 ## Important to know
 Before trying and using my own basic implementation version of git,
